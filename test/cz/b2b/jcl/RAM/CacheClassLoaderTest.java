@@ -5,26 +5,23 @@
  */
 package cz.b2b.jcl.RAM;
 
-import cz.b2b.jcl.RAM.CacheClassLoader;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.security.Provider;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import java.lang.reflect.Method;
+import static org.junit.Assert.*;
 
 /**
  *
  * @author richard
  */
 public class CacheClassLoaderTest {
-    private String HOME_DIR = "/home/richard/NetBeansProjects/O2/b2b-jcl/test/cz/b2b/jcl/RAM/resource";
-    
-    
+
+    private String PROJECT_HOME_DIR = "XXX";
+    private String HOME_DIR = "";
+
     public CacheClassLoaderTest() {
     }
 
@@ -38,6 +35,12 @@ public class CacheClassLoaderTest {
 
     @Before
     public void setUp() {
+        //PROJECT_HOME_DIR = "/home/richard/NetBeansProjects";
+        
+        
+        
+        assertNotEquals("PROJECT_HOME_DIR must be define!", "XXX", PROJECT_HOME_DIR);
+        HOME_DIR = PROJECT_HOME_DIR + "/b2b-jcl/test/cz/b2b/jcl/RAM/resource";
     }
 
     @After
@@ -57,8 +60,6 @@ public class CacheClassLoaderTest {
         System.out.println("class = " + o.getClass().getCanonicalName());
         print.invoke(o, "JAR");
 
-
-
     }
 
     @Test
@@ -74,8 +75,7 @@ public class CacheClassLoaderTest {
         System.out.println("class = " + o.getClass().getCanonicalName());
         print.invoke(o, "DIR");
     }
-    
-    
+
     @Test
     public void testAddClass() throws Exception {
         String path = HOME_DIR + "/class";
@@ -102,7 +102,7 @@ public class CacheClassLoaderTest {
         String fullClassName = packageName + "." + className;
         System.out.println("addJava, path = " + path + ", package =  " + packageName + ", class = " + className);
         CacheClassLoader childClassLoader = new CacheClassLoader(Thread.currentThread().getContextClassLoader());
-        childClassLoader.addJava(path, packageName, className,null);
+        childClassLoader.addJava(path, packageName, className, null);
         final Class<?> test = Class.forName(fullClassName, true, childClassLoader);
         Object o = test.getDeclaredConstructor(new Class[]{}).newInstance(new Object[]{});
 
@@ -110,8 +110,7 @@ public class CacheClassLoaderTest {
         System.out.println("class = " + o.getClass().getCanonicalName());
         print.invoke(o, "JAVA");
         childClassLoader.close();
-        
+
     }
-    
-    
+
 }

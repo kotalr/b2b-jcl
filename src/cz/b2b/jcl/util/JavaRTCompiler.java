@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License") +  you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cz.b2b.jcl.util;
 
 import java.io.*;
@@ -7,9 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class used to dynamically compile Java classes. Let's go with some magic in
- * Java.
- *
+ Class used to dynamically compile Java classes.
+ @author Richard Kotal &#60;richard.kotal@b2b.cz&#620;
  */
 public class JavaRTCompiler {
 
@@ -19,15 +36,18 @@ public class JavaRTCompiler {
     private static final Logger logger = LoggerFactory.getLogger(JavaRTCompiler.class);
 
     /**
-     * Compile class from file
-     *
-     * @param path Path to access to java source file or java file (file with
-     * .java suffix)
-     * @param classname The class name
-     * @param packageName The package defined for the class
-     * @param extraLib add extra libraries or path with libraries
-     * @return path to compiled class file
-     * @throws java.io.IOException
+     Compile class from file.
+     <p>
+     Setting for StandardLocation.CLASS_OUTPUT does not work!
+
+     @param path Path to access to java source file or java file (file with
+     .java suffix)
+     @param classname The class name
+     @param packageName The package defined for the class
+     @param extraLib additional libraries path
+     @return path to compiled class file. Same as path for source code. Only
+     suffix is changed from .java to .class
+     @throws java.io.IOException Throw if location CLASS_PATH is an output location and path does not represent an existing directory
      */
     @SuppressWarnings("unchecked")
     public static String fileCompile(
@@ -35,7 +55,7 @@ public class JavaRTCompiler {
             String classname,
             String packageName,
             String[] extraLib
-    ) throws IOException {
+    ) throws IOException  {
         String java_file = null;
         String class_file = null;
         // String tmp_dir = TMP_DIR + java.io.File.separatorChar;
@@ -60,10 +80,10 @@ public class JavaRTCompiler {
             if (path == null) {
                 return null;
             }
-            if (path.endsWith(cz.b2b.jcl.RAM.CacheClassLoader.JAVA_SUFFIX) == true) {
+            if (path.endsWith(CONST.JAVA_SUFFIX) == true) {
                 java_file = path;
             } else {
-                java_file = path + java.io.File.separatorChar + classname + cz.b2b.jcl.RAM.CacheClassLoader.JAVA_SUFFIX;
+                java_file = path + java.io.File.separatorChar + classname + CONST.JAVA_SUFFIX;
 
             }
             Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(
@@ -96,7 +116,7 @@ public class JavaRTCompiler {
         if (java_file == null) {
             return null;
         }
-        class_file = java_file.replace(cz.b2b.jcl.RAM.CacheClassLoader.JAVA_SUFFIX, cz.b2b.jcl.RAM.CacheClassLoader.CLASS_SUFFIX);
+        class_file = java_file.replace(CONST.JAVA_SUFFIX, CONST.CLASS_SUFFIX);
         return class_file;
 
     }
