@@ -24,6 +24,8 @@ import java.io.*;
 import org.slf4j.*;
 import cz.b2b.jcl.util.CONST;
 import java.sql.*;
+import com.mchange.v2.c3p0.*;
+import java.beans.PropertyVetoException;
 
 /**
  The JdbcClassLoader class implements a class loader that loads classes from a
@@ -66,7 +68,7 @@ import java.sql.*;
  System.out.println("class = " + o.getClass().getCanonicalName());
  print.invoke(o, "JDBC");
 
-</pre>
+ </pre>
 
 
  @author Richard Kotal &#60;richard.kotal@b2b.cz&#620;
@@ -79,13 +81,10 @@ public class JdbcClassLoader extends URLClassLoader {
     private final static String class_name = "class_name";
     private final static String class_code = "class_code";
 
-    private String driver = null;
-    private String dbUrl = null;
-    private String username = null;
-    private String password = null;
     private String table = null;
 
     private final URL jdbcURL = new URL(protocol, CONST.host, CONST.port, CONST.baseURI, new JdbcURLStreamHandler());
+    private final ComboPooledDataSource cpds = new ComboPooledDataSource();
 
     /**
      Constructs a new JdbcClassLoader for the given URLs of URLClassLoader and
@@ -122,16 +121,35 @@ public class JdbcClassLoader extends URLClassLoader {
         this(new URL[]{}, parent);
     }
 
+    @Override
+    public void close() throws IOException {
+        cpds.close();
+        super.close();
+
+    }
+
+    /**
+     Set Pool settings.
+    
+     @param minPoolSize minimal pool size
+     @param maxPoolSize maximal pool size
+     @param maxIdleTime maximal idle timeout
+     */
+    public void setPoolSettings(int minPoolSize, int maxPoolSize, int maxIdleTime) {
+        cpds.setMinPoolSize(minPoolSize);
+        cpds.setMaxPoolSize(maxPoolSize);
+        cpds.setMaxIdleTime(maxIdleTime);
+
+    }
+
     /**
      Set JDBC driver.
 
      @param driver JDBC driver (ex.: org.mariadb.jdbc.Driver)
      @throws ClassNotFoundException Thrown when JDBC driver class not found
      */
-    public void setDriver(String driver) throws ClassNotFoundException {
-        this.driver = driver;
-        Class.forName(this.driver);
-
+    public void setDriver(String driver) throws ClassNotFoundException, PropertyVetoException {
+        cpds.setDriverClass(driver);
     }
 
     /**
@@ -148,7 +166,7 @@ public class JdbcClassLoader extends URLClassLoader {
      @param dbUrl url connection (ex.: jdbc:mariadb://127.0.0.1:3306/test)
      */
     public void setDbUrl(String dbUrl) {
-        this.dbUrl = dbUrl;
+        cpds.setJdbcUrl(dbUrl);
 
     }
 
@@ -157,7 +175,7 @@ public class JdbcClassLoader extends URLClassLoader {
      @param username login name to DB (ex.: root)
      */
     public void setUsername(String username) {
-        this.username = username;
+        cpds.setUser(username);
 
     }
 
@@ -166,7 +184,7 @@ public class JdbcClassLoader extends URLClassLoader {
      @param password password to DB (ex.: root)
      */
     public void setPassword(String password) {
-        this.password = password;
+        cpds.setPassword(password);
 
     }
 
@@ -179,7 +197,7 @@ public class JdbcClassLoader extends URLClassLoader {
      @param password password to DB (ex.: root)
      @throws ClassNotFoundException Thrown when JDBC driver class not found
      */
-    public void setConnection(String driver, String dbUrl, String table, String username, String password) throws ClassNotFoundException {
+    public void setConnection(String driver, String dbUrl, String table, String username, String password) throws ClassNotFoundException, PropertyVetoException {
         setDriver(driver);
         setDbUrl(dbUrl);
         setTable(table);
@@ -230,7 +248,7 @@ public class JdbcClassLoader extends URLClassLoader {
             logger.debug(SQL);
 
             try {
-                conn = DriverManager.getConnection(dbUrl, username, password);
+                conn = cpds.getConnection();
                 stmt = conn.createStatement();
                 rs = stmt.executeQuery(SQL);
                 if (rs.next() == true) {

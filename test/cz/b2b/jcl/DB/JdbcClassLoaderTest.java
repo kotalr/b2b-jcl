@@ -50,7 +50,7 @@ public class JdbcClassLoaderTest {
         JdbcClassLoader childClassLoader = new JdbcClassLoader(Thread.currentThread().getContextClassLoader());
         childClassLoader.setConnection(driver, dbUrl, table, username, password);
 
-        final Class<?> test = Class.forName("cz.b2b.jcl.RAM.resource.Test", true, childClassLoader);
+        Class<?> test = Class.forName("cz.b2b.jcl.RAM.resource.Test", true, childClassLoader);
         Object o = test.getDeclaredConstructor(new Class[]{}).newInstance(new Object[]{});
 
         Method print = o.getClass().getMethod("print", String.class);
