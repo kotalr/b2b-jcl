@@ -226,7 +226,7 @@ public class CacheClassLoader extends URLClassLoader {
     public void addJava(String path, String packageName, String className, String[] extraLib) throws IOException {
         String class_name = cz.b2b.jcl.util.JavaRTCompiler.fileCompile(path, className, packageName, extraLib);
         if (class_name == null) {
-            throw new FileNotFoundException("Java file does not exists.");
+            throw new FileNotFoundException("Java file does not exist.");
         }
         add_class(class_name, packageName, className);
         File fi = new File(class_name);
