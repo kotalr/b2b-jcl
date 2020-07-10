@@ -49,10 +49,7 @@ public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
                 hash.remove(key);
             } else {
                 // We now add this object to the beginning of the hard
-                // reference queue.  One reference can occur more than
-                // once, because lookups of the FIFO queue are slow, so
-                // we don't want to search through it each time to remove
-                // duplicates.
+                // reference queue.  
                 hardCache.enqueue(result);
                 if (hardCache.size() > HARD_SIZE) {
                     // Remove the last entry if list longer than HARD_SIZE
