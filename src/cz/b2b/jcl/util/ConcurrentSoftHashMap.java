@@ -8,8 +8,9 @@ import java.util.*;
 import java.lang.ref.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
-public class ConcurrentSoftHashMap<K,V> extends AbstractMap {
+public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
 
     /**
      The internal HashMap that will hold the SoftReference.
@@ -27,7 +28,6 @@ public class ConcurrentSoftHashMap<K,V> extends AbstractMap {
      Reference queue for cleared SoftReference objects.
      */
     private final ReferenceQueue queue = new ReferenceQueue();
-
 
     public ConcurrentSoftHashMap(int hardSize) {
         HARD_SIZE = hardSize;
@@ -66,9 +66,9 @@ public class ConcurrentSoftHashMap<K,V> extends AbstractMap {
     /**
      Here we put the key, value pair into the HashMap using
      a SoftValue object.
-     * @param key
-     * @param value
-     * @return 
+     @param key
+     @param value
+     @return
      */
     @Override
     public Object put(Object key, Object value) {
@@ -95,16 +95,42 @@ public class ConcurrentSoftHashMap<K,V> extends AbstractMap {
         return hash.size();
     }
 
-    
     @Override
     public boolean containsKey(Object key) {
         processQueue(); // throw out garbage collected values first
         return hash.containsKey(key);
     }
-    
+
     @Override
     public Set entrySet() {
-        throw new UnsupportedOperationException();
+        Set<Map.Entry> entry = new HashSet<>();
+        Map.Entry simpleImmutableEntry = null;
+        Object result = null;
+        processQueue(); // throw out garbage collected values first
+        for (Map.Entry<Object, SoftReference> item : hash.entrySet()) {
+            if (item == null) {
+                continue;
+            }
+            Object key = item.getKey();
+            SoftReference soft_ref = item.getValue();
+            if (soft_ref != null) {
+                result = soft_ref.get();
+                if (result == null) {
+                    hash.remove(key);
+                } else {
+                    hardCache.enqueue(result);
+                    if (hardCache.size() > HARD_SIZE) {
+                        hardCache.dequeue();
+                    }
+                    simpleImmutableEntry = new SimpleImmutableEntry(key, result);
+                    entry.add(simpleImmutableEntry);
+
+                }
+            }
+
+        }
+
+        return entry;
     }
 
     private class ConcurrentLinkedSetQueue<E> extends ConcurrentLinkedQueue<E> {
