@@ -130,7 +130,7 @@ public class JdbcClassLoader extends URLClassLoader {
 
     /**
      Set Pool settings.
-    
+
      @param minPoolSize minimal pool size
      @param maxPoolSize maximal pool size
      @param maxIdleTime maximal idle timeout
@@ -217,22 +217,31 @@ public class JdbcClassLoader extends URLClassLoader {
 
         @Override
         protected URLConnection openConnection(URL url) throws IOException {
+            return new JdbcURLConnection(url);
+        }
+
+    }
+
+    private class JdbcURLConnection extends URLConnection {
+
+        public JdbcURLConnection(URL url) {
+            super(url);
+        }
+
+        @Override
+        public void connect() throws IOException {
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
             Map cols = parseURL(url);
 
             final byte[] data = class_code(cols);
             if (data == null) {
                 throw new FileNotFoundException(url.getFile());
             }
-            return new URLConnection(url) {
-                @Override
-                public void connect() throws IOException {
-                }
 
-                @Override
-                public InputStream getInputStream() throws IOException {
-                    return new ByteArrayInputStream(data);
-                }
-            };
+            return new ByteArrayInputStream(data);
         }
 
         private byte[] class_code(Map cols) {

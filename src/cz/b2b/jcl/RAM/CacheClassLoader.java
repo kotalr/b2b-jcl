@@ -22,9 +22,9 @@ import java.net.*;
 import java.util.*;
 import java.util.jar.*;
 import java.io.*;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.*;
 import cz.b2b.jcl.util.CONST;
+import cz.b2b.jcl.util.ConcurrentSoftHashMap;
 
 /**
  The CacheClassLoader class implements a class loader that loads classes from
@@ -89,7 +89,7 @@ public class CacheClassLoader extends URLClassLoader {
     private final static String protocol = "x-mem-cache";
     private static final Logger logger = LoggerFactory.getLogger(CacheClassLoader.class);
 
-    private final Map<String, byte[]> CACHE = new ConcurrentHashMap<>();
+    private Map<String, byte[]> CACHE = null;
     private final URL cacheURL = new URL(protocol, CONST.host, CONST.port, CONST.baseURI, new CacheURLStreamHandler());
 
     /**
@@ -104,12 +104,16 @@ public class CacheClassLoader extends URLClassLoader {
      resources. The URLs will be searched in the order specified for classes and
      resources after first searching in the specified parent class loader.
      @param parent the parent class loader for delegation
+     @param hardSize The number of "hard" references of class code to hold
+     internally.
      @throws MalformedURLException Thrown to indicate that a malformed URL has
      occurred. Either no legal protocol could be found in a specification string
      or the string could not be parsed.
      */
-    public CacheClassLoader(URL[] urls, ClassLoader parent) throws MalformedURLException {
+    public CacheClassLoader(URL[] urls, ClassLoader parent, int hardSize) throws MalformedURLException {
         super(urls, parent);
+
+        CACHE = new ConcurrentSoftHashMap<>(hardSize);
         super.addURL(cacheURL);
     }
 
@@ -127,11 +131,12 @@ public class CacheClassLoader extends URLClassLoader {
      or the string could not be parsed.
      */
     public CacheClassLoader(ClassLoader parent) throws MalformedURLException {
-        this(new URL[]{}, parent);
+        this(new URL[]{}, parent, 100);
     }
 
     @Override
     public void close() throws IOException {
+
         CACHE.clear();
         super.close();
 
@@ -172,7 +177,6 @@ public class CacheClassLoader extends URLClassLoader {
                     logger.debug("Class/Resource " + jarEntry.getName() + " already loaded; ignoring entry...");
                     continue;
                 }
-
                 out = new ByteArrayOutputStream();
 
                 while ((len = jis.read(b)) > 0) {
@@ -182,7 +186,6 @@ public class CacheClassLoader extends URLClassLoader {
                 logger.debug("Jar entry = " + name);
 
                 CACHE.put(CONST.baseURI + name, out.toByteArray());
-
                 out.close();
             }
         } finally {
@@ -314,20 +317,29 @@ public class CacheClassLoader extends URLClassLoader {
 
         @Override
         protected URLConnection openConnection(URL url) throws IOException {
+            return new CacheURLConnection(url);
+        }
+
+    }
+
+    private class CacheURLConnection extends URLConnection {
+
+        public CacheURLConnection(URL url) {
+            super(url);
+        }
+
+        @Override
+        public void connect() throws IOException {
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
             final byte[] data = CACHE.get(url.getFile());
             if (data == null) {
                 throw new FileNotFoundException(url.getFile());
             }
-            return new URLConnection(url) {
-                @Override
-                public void connect() throws IOException {
-                }
 
-                @Override
-                public InputStream getInputStream() throws IOException {
-                    return new ByteArrayInputStream(data);
-                }
-            };
+            return new ByteArrayInputStream(data);
         }
 
     }
@@ -360,7 +372,6 @@ public class CacheClassLoader extends URLClassLoader {
             }
 
             CACHE.put(CONST.baseURI + name, out.toByteArray());
-
             out.close();
         } finally {
             if (bis != null) {
