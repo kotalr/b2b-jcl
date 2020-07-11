@@ -29,8 +29,11 @@ public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
      */
     private final ReferenceQueue queue = new ReferenceQueue();
 
+//    private final Thread checkRefQueue = new CheckRefQueue();
     public ConcurrentSoftHashMap(int hardSize) {
         HARD_SIZE = hardSize;
+        //    checkRefQueue.setDaemon(true);
+        //    checkRefQueue.start();        
     }
 
     @Override
@@ -51,7 +54,7 @@ public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
                 // We now add this object to the beginning of the hard
                 // reference queue.  
                 hardCache.enqueue(result);
-                if (hardCache.size() > HARD_SIZE) {
+                if (HARD_SIZE > -1 && hardCache.size() > HARD_SIZE) {
                     // Remove the last entry if list longer than HARD_SIZE
                     hardCache.dequeue();
                 }
@@ -84,6 +87,7 @@ public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
         hardCache.clear();
         processQueue(); // throw out garbage collected values
         hash.clear();
+//        checkRefQueue.interrupt();
     }
 
     @Override
@@ -116,7 +120,7 @@ public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
                     hash.remove(key);
                 } else {
                     hardCache.enqueue(result);
-                    if (hardCache.size() > HARD_SIZE) {
+                    if (HARD_SIZE > -1 && hardCache.size() > HARD_SIZE) {
                         hardCache.dequeue();
                     }
                     simpleImmutableEntry = new SimpleImmutableEntry(key, result);
@@ -179,4 +183,28 @@ public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
         }
     }
 
+    /*
+    private class CheckRefQueue extends Thread {
+
+        @Override
+        public void run() {
+            while (true) {
+                if (queue != null) {
+                    SoftValue obj = null;
+                    try {
+                        obj = (SoftValue) queue.remove();
+
+                    } catch (InterruptedException e) {
+                        e.fillInStackTrace();
+                    }
+
+                    if (obj != null) {
+                        hash.remove(obj.key); // we can access private data!
+                        obj.clear();
+                    }
+                }
+            }
+        }
+    }
+     */
 }

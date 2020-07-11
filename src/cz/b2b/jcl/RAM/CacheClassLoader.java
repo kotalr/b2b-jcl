@@ -105,7 +105,7 @@ public class CacheClassLoader extends URLClassLoader {
      resources after first searching in the specified parent class loader.
      @param parent the parent class loader for delegation
      @param hardSize The number of "hard" references of class code to hold
-     internally.
+     internally. If equal -1 all references are still held internally.
      @throws MalformedURLException Thrown to indicate that a malformed URL has
      occurred. Either no legal protocol could be found in a specification string
      or the string could not be parsed.
@@ -131,7 +131,7 @@ public class CacheClassLoader extends URLClassLoader {
      or the string could not be parsed.
      */
     public CacheClassLoader(ClassLoader parent) throws MalformedURLException {
-        this(new URL[]{}, parent, 100);
+        this(new URL[]{}, parent, -1);
     }
 
     @Override
