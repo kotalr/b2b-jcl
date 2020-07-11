@@ -1,5 +1,5 @@
 /*
-https://www.javaspecialists.eu/archive/Issue015.html
+base on: https://www.javaspecialists.eu/archive/Issue015.html
  */
 package cz.b2b.jcl.util;
 
