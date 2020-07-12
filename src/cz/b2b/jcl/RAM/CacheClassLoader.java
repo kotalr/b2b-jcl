@@ -167,14 +167,15 @@ public class CacheClassLoader extends URLClassLoader {
 
             JarEntry jarEntry = null;
             while ((jarEntry = jis.getNextJarEntry()) != null) {
+                name = CONST.baseURI + jarEntry.getName();
 
                 if (jarEntry.isDirectory()) {
-                    logger.debug("Ignoring directory " + jarEntry.getName() + CONST.DOT);
+                    logger.debug("Ignoring directory " + name + CONST.DOT);
                     continue;
                 }
 
-                if (CACHE.containsKey(CONST.baseURI + jarEntry.getName())) {
-                    logger.debug("Class/Resource " + jarEntry.getName() + " already loaded; ignoring entry...");
+                if (CACHE.containsKey(name)) {
+                    logger.debug("Class/Resource " + name + " already loaded; ignoring entry...");
                     continue;
                 }
                 out = new ByteArrayOutputStream();
@@ -182,10 +183,10 @@ public class CacheClassLoader extends URLClassLoader {
                 while ((len = jis.read(b)) > 0) {
                     out.write(b, 0, len);
                 }
-                name = jarEntry.getName();
+
                 logger.debug("Jar entry = " + name);
 
-                CACHE.put(CONST.baseURI + name, out.toByteArray());
+                CACHE.put(name, out.toByteArray());
                 out.close();
             }
         } finally {
@@ -371,7 +372,7 @@ public class CacheClassLoader extends URLClassLoader {
                 out.write(b, 0, len);
             }
 
-            CACHE.put(CONST.baseURI + name, out.toByteArray());
+                CACHE.put(CONST.baseURI + name, out.toByteArray());
             out.close();
         } finally {
             if (bis != null) {
