@@ -90,7 +90,7 @@ public class CacheClassLoader extends URLClassLoader {
     private final static String protocol = "x-mem-cache";
     private static final Logger logger = LoggerFactory.getLogger(CacheClassLoader.class);
 
-    private Map<String, byte[]> CACHE = null;
+    private final Map<String, byte[]> CACHE;
     private final URL cacheURL = new URL(protocol, CONST.host, CONST.port, CONST.baseURI, new CacheURLStreamHandler());
 
     /**
