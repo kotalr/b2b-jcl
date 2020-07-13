@@ -119,10 +119,6 @@ public class ConcurrentSoftHashMap<K, V> extends AbstractMap {
                 if (result == null) {
                     hash.remove(key);
                 } else {
-                    hardCache.enqueue(result);
-                    if (HARD_SIZE > -1 && hardCache.size() > HARD_SIZE) {
-                        hardCache.dequeue();
-                    }
                     simpleImmutableEntry = new SimpleImmutableEntry(key, result);
                     entry.add(simpleImmutableEntry);
 
