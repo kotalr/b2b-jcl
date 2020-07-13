@@ -25,6 +25,7 @@ import java.io.*;
 import org.slf4j.*;
 import cz.b2b.jcl.util.CONST;
 import cz.b2b.jcl.util.ConcurrentSoftHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  The CacheClassLoader class implements a class loader that loads classes from
@@ -106,14 +107,19 @@ public class CacheClassLoader extends URLClassLoader {
      @param parent the parent class loader for delegation
      @param hardSize The number of "hard" references of class code to hold
      internally. If equal -1 all references are still held internally.
+     @param softRef enable ConcurrentSoftHashMap for class byte representation
      @throws MalformedURLException Thrown to indicate that a malformed URL has
      occurred. Either no legal protocol could be found in a specification string
      or the string could not be parsed.
      */
-    public CacheClassLoader(URL[] urls, ClassLoader parent, int hardSize) throws MalformedURLException {
+    public CacheClassLoader(URL[] urls, ClassLoader parent, int hardSize, boolean softRef) throws MalformedURLException {
         super(urls, parent);
 
-        CACHE = new ConcurrentSoftHashMap<>(hardSize);
+        if (softRef == true) {
+            CACHE = new ConcurrentSoftHashMap<>(hardSize);
+        } else {
+            CACHE = new ConcurrentHashMap<>();
+        }
         super.addURL(cacheURL);
     }
 
@@ -131,7 +137,7 @@ public class CacheClassLoader extends URLClassLoader {
      or the string could not be parsed.
      */
     public CacheClassLoader(ClassLoader parent) throws MalformedURLException {
-        this(new URL[]{}, parent, -1);
+        this(new URL[]{}, parent, -1, false);
     }
 
     @Override
@@ -372,7 +378,7 @@ public class CacheClassLoader extends URLClassLoader {
                 out.write(b, 0, len);
             }
 
-                CACHE.put(CONST.baseURI + name, out.toByteArray());
+            CACHE.put(CONST.baseURI + name, out.toByteArray());
             out.close();
         } finally {
             if (bis != null) {
