@@ -366,7 +366,11 @@ public class CacheClassLoader extends URLClassLoader {
             throw new FileNotFoundException("Package name is empty.");
         }
 
-        name = packageName.replace(CONST.DOT, CONST.baseURI) + CONST.baseURI + className + CONST.CLASS_SUFFIX;
+        name = CONST.baseURI + packageName.replace(CONST.DOT, CONST.baseURI) + CONST.baseURI + className + CONST.CLASS_SUFFIX;
+        if (CACHE.containsKey(name)) {
+            logger.debug("Class/Resource " + name + " already loaded; ignoring entry...");
+            return;
+        }
 
         try {
             fis = new FileInputStream(class_name);
@@ -377,8 +381,8 @@ public class CacheClassLoader extends URLClassLoader {
             while ((len = bis.read(b)) > 0) {
                 out.write(b, 0, len);
             }
+            CACHE.put(name, out.toByteArray());
 
-            CACHE.put(CONST.baseURI + name, out.toByteArray());
             out.close();
         } finally {
             if (bis != null) {
